@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Whatsapp API</title>
+</head>
+
+<body>
+  <div id="app">
+    <div style="margin-bottom:20px;text-align:center">
+      <span id="info"></span>
+    </div>
+    <!-- <a href="/logout"><button>logout</button></a> -->
+    <div id="qr-container" style="display:none;text-align: center;margin-bottom:20px;">
+      <img src="" alt="QR Code" id="qrcode">
+    </div>
+    <div id="form" style="display:none;text-align: center;">
+      <form method="POST" id="form-send">
+        <input type="text" name="number" id="number" placeholder="number" required>
+        <input type="text" name="count" id="count" placeholder="count" required>
+        <input type="text" name="message" id="message" placeholder="message" required>
+        <button type="submit">kirim</button>
+      </form>
+      <form method="POST" id="form-blast-send">
+        <textarea name="message" id="message-blast" cols="30" rows="10" placeholder="message" required></textarea>
+        <button type="submit">kirim</button>
+      </form>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+  <script>
+    $(document).ready(() => {
+      var socket = io.connect('http://localhost:3001', {
+        path: '/socket.io'
+      });
+      socket.on('message', (msg) => {
+        $('#info').text(msg);
+      });
+      socket.on('qr', (src) => {
+        $('#qr-container').show();
+        $('#qrcode').attr('src', src);
+      });
+      socket.on('ready', () => {
+        $('#qr-container').hide();
+        $('#form').show();
+      });
+      $("#form-send").submit(function(event) {
+        event.preventDefault();
+        let number = $('#number').val();
+        let count = $('#count').val();
+        let message = $('#message').val();
+        $.ajax({
+          type: "POST",
+          url: '/send',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            number: number,
+            count: count,
+            message: message
+          }),
+          success: (res) => {
+            console.log(res)
+          },
+        });
+        $('#number').val('');
+        $('#count').val('');
+        $('#message').val('');
+        $('#info').text('Pesan Terkirim');
+      });
+      $("#form-blast-send").submit(function(event) {
+        event.preventDefault();
+        let message = $('#message-blast').val();
+        $.ajax({
+          type: "POST",
+          url: '/send-blast',
+          contentType: 'application/json',
+          data: JSON.stringify({ message: message }),
+          success: (res) => {
+            console.log(res)
+          },
+        });
+        $('#message-blast').val('');
+        $('#info').text('Pesan Terkirim');
+      });
+    })
+  </script>
+</body>
+
+</html>
